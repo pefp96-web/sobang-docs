@@ -283,6 +283,13 @@ document.getElementById('makePost').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i
 document.getElementById('makeTrain').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i)){show(i);return}save();buildTrain()};
 document.getElementById('makeDrill').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i)){show(i);return}save();buildDrill()};
 document.getElementById('makeLog').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i)){show(i);return}save();buildLog()};
+/* 점검업체 제휴용: ?by=업체명&tel=전화번호 */
+(function(){const q=new URLSearchParams(location.search),by=(q.get('by')||'').trim().slice(0,40),tel=(q.get('tel')||'').trim().replace(/[^0-9-]/g,'').slice(0,15);if(!by)return;
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),B=esc(by),T=tel?` 문의: <a href="tel:${tel}">${tel}</a>`:'';
+document.title=by+' 고객용 소방 서류 자동 작성기';document.querySelector('header h1').textContent=by+' 고객용 소방 서류 자동 작성기';
+const k=document.querySelector('.kmong');if(k){k.style.borderColor='#1565c0';k.innerHTML=`<b>${B} 고객 전용 무료 제공</b><br>${B}에서 점검을 맡겨 주신 건물을 위해 제공하는 작성기입니다.${T}`}
+document.querySelectorAll('p.note').forEach(p=>{if(p.innerHTML.includes('kmong.com'))p.innerHTML=`버튼마다 PDF 1종이 만들어집니다(인쇄 창에서 'PDF로 저장' 선택). 서류 검토가 필요하시면 ${B}에 문의해 주세요.${T}`});
+const d=document.getElementById('doc');if(d)new MutationObserver(()=>{d.querySelectorAll('.wm').forEach(w=>{if(w.textContent!==by+' 제공')w.textContent=by+' 제공'})}).observe(d,{childList:true,subtree:true});})();
 </script>
 </body>
 </html>
