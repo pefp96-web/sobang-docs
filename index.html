@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>소방계획서 자동 작성기 (무료 체험)</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:#f4f6f8;color:#222;line-height:1.5}
+header{background:#c62828;color:#fff;padding:16px 20px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;font-size:13px;opacity:.9}
+main{max-width:860px;margin:0 auto;padding:16px}
+.steps{display:flex;gap:6px;margin-bottom:14px}.steps button{flex:1;padding:10px 4px;border:0;border-radius:8px;background:#e0e0e0;font-weight:bold;cursor:pointer;font-size:13px}
+.steps button.on{background:#c62828;color:#fff}.steps button.done{background:#ffcdd2}
+section{display:none;background:#fff;border-radius:10px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.08)}section.on{display:block}
+h2{margin:0 0 4px;font-size:17px}.law{font-size:12px;color:#777;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}@media(max-width:600px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:13px;font-weight:bold}label .req{color:#c62828}
+input,select,textarea{width:100%;padding:8px;border:1px solid #bbb;border-radius:6px;font-size:14px;margin-top:3px;font-family:inherit}
+.full{grid-column:1/-1}.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;margin:6px 0 12px}
+.chk label{font-weight:normal;display:flex;gap:6px;align-items:center;background:#fafafa;border:1px solid #e3e3e3;border-radius:6px;padding:6px}
+.chk input{width:auto;margin:0}
+.grade{margin-top:14px;padding:12px;border-radius:8px;background:#fff3e0;border:1px solid #ffb74d;font-size:14px}
+.nav{display:flex;justify-content:space-between;margin-top:16px}.nav button,.act button{padding:10px 18px;border:0;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer}
+.prev{background:#e0e0e0}.next{background:#c62828;color:#fff}
+.act{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.act button{background:#37474f;color:#fff}
+.note{font-size:12px;color:#666;margin-top:10px}.err{color:#c62828;font-size:13px;margin-top:8px}
+#doc{display:none;background:#fff;max-width:860px;margin:16px auto;padding:24px;position:relative}#doc.on{display:block}
+#doc h1{text-align:center;font-size:24px;margin:120px 0 30px}#doc .cover{text-align:center;page-break-after:always;min-height:900px}#doc .cover table{margin:40px auto;width:70%}
+#doc h2{font-size:17px;border-bottom:2px solid #c62828;padding-bottom:4px;margin:22px 0 8px}#doc h3{font-size:14px;margin:14px 0 6px}#doc .chap{page-break-before:always}
+#doc table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}#doc th,#doc td{border:1px solid #555;padding:5px 6px;vertical-align:top}#doc th{background:#eee;width:22%}
+#doc p,#doc li{font-size:13px}#doc .wm{position:fixed;top:40%;left:0;right:0;text-align:center;font-size:60px;color:rgba(198,40,40,.12);transform:rotate(-25deg);pointer-events:none;font-weight:bold}
+#doc .tool{display:flex;gap:8px;margin-bottom:12px}#doc .tool button{padding:10px 18px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;background:#c62828;color:#fff}#doc .tool .back{background:#e0e0e0;color:#222}
+@media print{header,main{display:none!important}body{background:#fff}#doc{display:block;margin:0;padding:0;max-width:none}#doc .tool{display:none}#doc .cover{min-height:0}@page{size:A4;margin:15mm}}
+#summary table{width:100%;border-collapse:collapse;font-size:13px}#summary td{border:1px solid #ddd;padding:6px}#summary td:first-child{background:#fafafa;width:34%;font-weight:bold}
+</style>
+</head>
+<body>
+<header><h1>소방계획서 자동 작성기</h1><p>건물 정보 한 번 입력으로 소방계획서·업무수행기록표·훈련 기록부·자체점검 게시물까지. 입력 내용은 이 기기 브라우저에만 저장되고 어디에도 전송되지 않습니다.</p></header>
+<main>
+<div class="steps" id="tabs"></div>
+<form id="f" autocomplete="off">
+
+<section data-step="1">
+<h2>1단계 건물 기본 정보</h2><div class="law">화재예방법 시행령 제27조 제1항 제1호 (일반 현황)</div>
+<div class="grid">
+<label class="full">건물명 <span class="req">*</span><input name="bName" required placeholder="예: ○○빌딩"></label>
+<label class="full">도로명 주소 <span class="req">*</span><input name="addr" required></label>
+<label>주용도 <span class="req">*</span><select name="use" required><option value="">선택</option><option>공동주택(아파트)</option><option>공동주택(연립·다세대)</option><option>근린생활시설</option><option>업무시설</option><option>숙박시설</option><option>의료시설</option><option>교육연구시설</option><option>노유자시설</option><option>공장</option><option>창고시설</option><option>판매시설</option><option>복합건축물</option><option>기타</option></select></label>
+<label>구조<select name="struct"><option>철근콘크리트조</option><option>철골조</option><option>철골철근콘크리트조</option><option>조적조</option><option>경량철골조</option><option>목조</option><option>기타</option></select></label>
+<label>연면적(㎡) <span class="req">*</span><input name="area" type="number" min="0" step="0.01" required></label>
+<label>높이(m)<input name="height" type="number" min="0" step="0.1"></label>
+<label>지상 층수 <span class="req">*</span><input name="floorsUp" type="number" min="0" required></label>
+<label>지하 층수<input name="floorsDown" type="number" min="0" value="0"></label>
+<label>사용승인일 <span class="req">*</span><input name="approvalDate" type="date" required></label>
+<label>수용인원(근무·거주·이용자 합계)<input name="capacity" type="number" min="0"></label>
+<label>소유자(관계인) 이름<input name="owner"></label>
+<label>소유자 연락처<input name="ownerTel" type="tel"></label>
+<label>소방안전관리자 이름 <span class="req">*</span><input name="mgr" required></label>
+<label>자격 등급<select name="mgrGrade"><option>특급</option><option>1급</option><option selected>2급</option><option>3급</option></select></label>
+<label>선임일<input name="mgrDate" type="date"></label>
+<label>관리자 연락처<input name="mgrTel" type="tel"></label>
+<label>보조자 선임<select name="assistant"><option>없음</option><option>있음</option></select></label>
+<label>보조자 이름<input name="assistantName"></label>
+</div>
+<div class="grade" id="grade">연면적·층수·용도를 넣으면 예상 등급을 안내합니다.</div>
+</section>
+
+<section data-step="2">
+<h2>2단계 시설 현황</h2><div class="law">제2호 (소방·방화시설, 전기·가스·위험물 현황), 제6호 (방화시설 유지관리)</div>
+<label>소방시설 (설치된 것 모두 체크)</label>
+<div class="chk" id="fireSys"></div>
+<label>방화·피난 관련</label>
+<div class="chk" id="fireProof"></div>
+<div class="grid">
+<label>방화문 개수(대략)<input name="fireDoors" type="number" min="0"></label>
+<label>방화구획 층 수<input name="fireZones" type="number" min="0"></label>
+<label>수전 용량(kW)<input name="power" type="number" min="0"></label>
+<label>가스 종류<select name="gas"><option>도시가스</option><option>LPG</option><option>사용 안 함</option></select></label>
+<label>위험물 저장<select name="hazmat"><option>없음</option><option>있음</option></select></label>
+<label>위험물 품명·수량<input name="hazmatDesc" placeholder="예: 경유 400L"></label>
+</div>
+</section>
+
+<section data-step="3">
+<h2>3단계 피난 계획·취약자</h2><div class="law">제5호 (피난계획), 제9호 (자위소방대 조직)</div>
+<div class="grid">
+<label>피난층<input name="exitFloor" value="1층"></label>
+<label>직통계단 수<input name="stairs" type="number" min="0" value="1"></label>
+<label>특별피난계단 유무<select name="specialStairs"><option>없음</option><option>있음</option></select></label>
+<label>옥상 대피 가능<select name="roof"><option>불가</option><option>가능</option></select></label>
+<label class="full">비상 집결지<input name="assembly" placeholder="예: 건물 앞 주차장"></label>
+<label>화재안전취약자(장애인·노약자·영유아)<select name="vuln"><option>없음</option><option>있음</option></select></label>
+<label>취약자 인원(대략)<input name="vulnCount" type="number" min="0"></label>
+<label>자위소방대 가능 인원 <span class="req">*</span><input name="crew" type="number" min="1" value="5" required></label>
+<label>층별 담당자(쉼표로 구분, 선택)<input name="floorLeads" placeholder="1층 홍길동, 2층 김철수"></label>
+</div>
+<p class="note">자위소방대(지휘·통보연락·초기소화·피난유도·응급구조)는 위 인원으로 자동 편성됩니다.</p>
+</section>
+
+<section data-step="4">
+<h2>4단계 운영 계획 (기본값 그대로 두어도 됩니다)</h2><div class="law">제3·4·7·8·10·13·14호</div>
+<div class="grid">
+<label>작동점검 월(자동 계산)<input name="opMonth" readonly></label>
+<label>종합점검 월(자동 계산)<input name="fullMonth" readonly></label>
+<label>월간 자체 점검일(매월 며칠)<input name="monthlyDay" type="number" min="1" max="28" value="5"></label>
+<label>소방훈련·교육 월<select name="drillMonth"></select></label>
+<label>권원 분리(공동 소방안전관리)<select name="split"><option>해당 없음</option><option>해당</option></select></label>
+<label>올해 공사 계획<select name="construction"><option>없음</option><option>있음</option></select></label>
+<label class="full">기록 보관 방법<select name="keep"><option>관리사무소 서류철 보관(2년)</option><option>전자 파일 보관(2년)</option><option>서류·전자 병행(2년)</option></select></label>
+</div>
+<div id="summary" style="margin-top:16px"></div>
+<div class="act">
+<button type="button" id="saveJson">입력값 파일로 저장</button>
+<button type="button" id="loadJson">입력값 불러오기</button>
+<button type="button" id="reset">처음부터 다시</button>
+<button type="button" id="makeDoc" style="background:#c62828">소방계획서 만들기(PDF 저장)</button>
+<button type="button" id="makeLog" style="background:#c62828">업무수행기록표 12개월 만들기(PDF 저장)</button>
+<button type="button" id="makeDrill" style="background:#c62828">자위소방대 교육·훈련 결과 기록부 만들기(PDF 저장)</button>
+<button type="button" id="makeTrain" style="background:#c62828">소방훈련·교육 실시 결과 기록부 만들기(PDF 저장)</button>
+<button type="button" id="makePost" style="background:#c62828">자체점검기록표(게시용) 만들기(PDF 저장)</button>
+<input type="file" id="file" accept=".json" hidden>
+</div>
+<p class="note">다음 단계: 서류 4종 PDF 출력(소방계획서·업무수행기록표 12개월·훈련 결과 기록부·자체점검 게시물). 무료 체험본에는 워터마크가 들어갑니다. 등급 판정은 참고용이며 최종 판단은 관할 소방서 기준을 따르세요.</p>
+</section>
+
+<div class="err" id="err"></div>
+<div class="nav"><button type="button" class="prev" id="prev">이전</button><button type="button" class="next" id="next">다음</button></div>
+</form>
+</main>
+<div id="doc"></div>
+<script>
+const KEY='fireplan_v1';
+const SYS=['소화기','자동소화장치','옥내소화전','옥외소화전','스프링클러','간이스프링클러','물분무 등 소화설비','자동화재탐지설비','비상경보설비','비상방송설비','자동화재속보설비','가스누설경보기','유도등·유도표지','비상조명등','피난기구(완강기 등)','제연설비','연결송수관','연결살수설비','비상콘센트','무선통신보조설비','소화용수설비'];
+const PROOF=['방화문','방화셔터','방화구획','방염 커튼·카펫 사용','피난유도선','휴대용 비상조명등'];
+const f=document.getElementById('f');
+const mk=(id,arr,name)=>document.getElementById(id).innerHTML=arr.map(v=>`<label><input type="checkbox" name="${name}" value="${v}">${v}</label>`).join('');
+mk('fireSys',SYS,'sys');mk('fireProof',PROOF,'proof');
+f.drillMonth.innerHTML=[...Array(12)].map((_,i)=>`<option ${i==4?'selected':''}>${i+1}월</option>`).join('');
+const secs=[...document.querySelectorAll('section')];const names=['1 건물','2 시설','3 피난','4 운영'];
+const tabs=document.getElementById('tabs');tabs.innerHTML=names.map((n,i)=>`<button type="button" data-i="${i}">${n}</button>`).join('');
+let cur=0;
+function show(i){cur=i;secs.forEach((s,k)=>s.classList.toggle('on',k==i));[...tabs.children].forEach((b,k)=>{b.classList.toggle('on',k==i);b.classList.toggle('done',k<i)});
+document.getElementById('prev').style.visibility=i?'visible':'hidden';document.getElementById('next').textContent=i==3?'입력 완료':'다음';if(i==3)summary();document.getElementById('err').textContent='';window.scrollTo(0,0)}
+function valid(i){const bad=[...secs[i].querySelectorAll('[required]')].filter(e=>!e.value);bad.forEach(e=>e.style.borderColor='#c62828');
+if(bad.length){document.getElementById('err').textContent='필수 칸('+bad.map(e=>e.parentElement.firstChild.textContent.trim()).join(', ')+')을 채워 주세요.';return false}return true}
+tabs.onclick=e=>{const i=+e.target.dataset.i;if(isNaN(i))return;if(i>cur&&!valid(cur))return;show(i)};
+document.getElementById('prev').onclick=()=>show(cur-1);
+document.getElementById('next').onclick=()=>{if(!valid(cur))return;if(cur<3)show(cur+1);else{save();document.getElementById('err').textContent='입력 완료. 브라우저에 저장했습니다.'}};
+function data(){const o={};new FormData(f).forEach((v,k)=>{if(k=='sys'||k=='proof'){(o[k]=o[k]||[]).push(v)}else o[k]=v});return o}
+function fill(o){for(const[k,v]of Object.entries(o)){if(Array.isArray(v)){f.querySelectorAll(`[name=${k}]`).forEach(c=>c.checked=v.includes(c.value))}else if(f[k])f[k].value=v}calc()}
+function save(){localStorage.setItem(KEY,JSON.stringify(data()))}
+function grade(o){const a=+o.area||0,up=+o.floorsUp||0,h=+o.height||0,apt=(o.use||'').includes('아파트'),s=o.sys||[];
+if(apt?(up>=50||h>=200):(up>=30||h>=120||a>=100000))return'특급';
+if(apt?(up>=30||h>=120):(a>=15000||up>=11))return'1급';
+if(s.some(x=>/옥내소화전|^스프링클러|물분무/.test(x)))return'2급';
+if(s.some(x=>/간이스프링클러|자동화재탐지/.test(x)))return'3급';
+return a?'대상 아님 또는 3급(시설 체크 후 다시 확인)':''}
+function calc(){const o=data(),g=grade(o);document.getElementById('grade').innerHTML=g?`예상 소방안전관리 대상 등급: <b>${g}</b><br><small>참고용 판정입니다. 2단계 소방시설 체크 결과도 반영됩니다.</small>`:'연면적·층수·용도를 넣으면 예상 등급을 안내합니다.';
+if(o.approvalDate){const m=+o.approvalDate.slice(5,7);const full=(o.sys||[]).some(x=>/^스프링클러|물분무/.test(x))||(+o.area>=5000&&!(o.use||'').includes('공동주택'));
+f.fullMonth.value=full?m+'월 (사용승인월)':'해당 없음(작동점검만)';f.opMonth.value=full?((m+5)%12+1)+'월 (종합점검 6개월 뒤)':m+'월 (사용승인월)'}}
+function summary(){const o=data();const rows=[['건물',`${o.bName||''} / ${o.use||''} / ${o.struct}`],['규모',`연면적 ${o.area||'-'}㎡, 지상 ${o.floorsUp||0}층·지하 ${o.floorsDown||0}층`],['예상 등급',grade(o)||'-'],['소방안전관리자',`${o.mgr||'-'} (${o.mgrGrade})`],['소방시설',(o.sys||[]).join(', ')||'선택 없음'],['점검 일정',`작동 ${o.opMonth||'-'} / 종합 ${o.fullMonth||'-'}`],['훈련·교육',o.drillMonth],['자위소방대',`${o.crew}명 자동 편성`],['취약자',o.vuln+(o.vulnCount?` (${o.vulnCount}명)`:'')]];
+document.getElementById('summary').innerHTML='<h2>입력 요약</h2><table>'+rows.map(r=>`<tr><td>${r[0]}</td><td>${String(r[1]).replace(/</g,'&lt;')}</td></tr>`).join('')+'</table>'}
+f.addEventListener('input',()=>{calc();save()});f.addEventListener('change',()=>{calc();save()});
+document.getElementById('saveJson').onclick=()=>{const b=new Blob([JSON.stringify(data(),null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(f.bName.value||'건물')+'_소방계획_입력값.json';a.click()};
+const fi=document.getElementById('file');document.getElementById('loadJson').onclick=()=>fi.click();
+fi.onchange=async()=>{try{fill(JSON.parse(await fi.files[0].text()));save();summary()}catch(e){alert('파일을 읽지 못했습니다.')}};
+document.getElementById('reset').onclick=()=>{if(confirm('입력값을 모두 지울까요?')){localStorage.removeItem(KEY);f.reset();calc();show(0)}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)fill(s)}catch(e){}
+show(0);
+// 3단계: 소방계획서 본문 출력 (인쇄 → PDF로 저장)
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tb=rows=>'<table>'+rows.map(r=>`<tr><th>${esc(r[0])}</th><td>${esc(r[1])||'&nbsp;'}</td></tr>`).join('')+'</table>';
+const RISK={'공동주택(아파트)':'세대 내 주방 조리 화재, 전기난로·멀티탭 과부하, 지하주차장 차량 화재, 피난통로 적치물','공동주택(연립·다세대)':'주방 조리 화재, 노후 배선, 필로티 주차장 차량·쓰레기 화재, 계단 적치물','근린생활시설':'음식점 주방 덕트 화재, 간판·전기설비 과열, 영업장 인테리어 가연물','업무시설':'사무기기·멀티탭 과부하, 전산실 전기 화재, 흡연 부주의, 서고 가연물','숙박시설':'객실 흡연, 전열기 사용, 야간 취침 중 발화로 인한 피난 지연','의료시설':'산소 등 의료가스, 전기 의료기기 과열, 거동 불편 환자 피난 지연','교육연구시설':'실험실 화학물질, 전열기, 다수 인원 동시 피난','노유자시설':'주방·전열기 화재, 자력 피난 곤란자 다수','공장':'용접·절단 등 화기 작업, 분진·가연성 원료, 전동기 과열','창고시설':'적재물 대량 가연물, 지게차 충전, 전기 배선 노후','판매시설':'다량 가연성 상품, 다수 이용객 피난 혼잡, 매장 전기 설비','복합건축물':'용도별 위험 혼재(주방·전기·창고), 권원별 관리 공백','기타':'전기 설비 과열, 화기 취급 부주의, 가연물 적치'};
+function crewTable(o){const n=Math.max(1,+o.crew||1),mgr=o.mgr||'소방안전관리자';const leads=(o.floorLeads||'').split(',').map(s=>s.trim()).filter(Boolean);
+const teams=[['통보연락반','119 신고, 관계인·입주자 전파, 비상방송'],['초기소화반','소화기·옥내소화전으로 초기 진화, 확산 방지'],['피난유도반','층별 피난 유도, 취약자 피난 보조, 인원 확인'],['응급구조반','부상자 응급처치, 구급대 인계']];const cnt=[0,0,0,0];for(let i=0;i<n-1;i++)cnt[i%4]++;
+return '<table><tr><th>구분</th><td><b>임무</b></td><td style="width:18%"><b>인원</b></td></tr><tr><th>대장(지휘)</th><td>화재 상황 판단, 각 반 지휘, 소방대 도착 시 정보 제공</td><td>1명 ('+esc(mgr)+')</td></tr>'+teams.map((t,i)=>`<tr><th>${t[0]}</th><td>${t[1]}</td><td>${cnt[i]?cnt[i]+'명':'대장 겸임'}</td></tr>`).join('')+'</table>'+(leads.length?'<p>층별 담당: '+esc(leads.join(' / '))+'</p>':'')}
+function buildDoc(){const o=data(),g=grade(o)||'-',sys=o.sys||[],pr=o.proof||[],y=new Date().getFullYear();const dm=parseInt(o.drillMonth)||5;
+const monthsRows=[...Array(12)].map((_,i)=>{const m=i+1,t=[];if((o.opMonth||'').startsWith(m+'월'))t.push('작동점검');if((o.fullMonth||'').startsWith(m+'월'))t.push('종합점검');if(m==dm)t.push('소방훈련·교육');return`<tr><th>${m}월</th><td>월간 자체점검(${o.monthlyDay||5}일), 업무수행기록표 작성${t.length?', <b>'+t.join(', ')+'</b>':''}</td></tr>`}).join('');
+const h=`<div class="tool"><button type="button" onclick="window.print()">인쇄 / PDF로 저장</button><button type="button" class="back" onclick="document.getElementById('doc').classList.remove('on');document.querySelector('main').style.display=''">입력 화면으로</button></div>
+<div class="wm">무료 체험본</div>
+<div class="cover"><h1>${y}년도 소방계획서</h1>${tb([['대상물명',o.bName],['소재지',o.addr],['용도',o.use],['소방안전관리 등급(참고)',g],['소방안전관리자',`${o.mgr||''} (${o.mgrGrade}) ${o.mgrTel||''}`],['작성일',new Date().toISOString().slice(0,10)]])}<p>「화재의 예방 및 안전관리에 관한 법률」 제24조 제5항 및 같은 법 시행령 제27조에 따라 작성</p></div>
+<div><h2>제1장 소방안전관리계획</h2>
+<h3>1. 일반 현황 (시행령 제27조 제1항 제1호)</h3>${tb([['건물명',o.bName],['주소',o.addr],['용도 / 구조',`${o.use} / ${o.struct}`],['연면적',o.area?o.area+' ㎡':''],['층수 / 높이',`지상 ${o.floorsUp||0}층, 지하 ${o.floorsDown||0}층${o.height?' / '+o.height+' m':''}`],['사용승인일',o.approvalDate],['수용인원',o.capacity?o.capacity+'명':''],['관계인(소유자)',`${o.owner||''} ${o.ownerTel||''}`],['소방안전관리자',`${o.mgr||''} / ${o.mgrGrade} / 선임일 ${o.mgrDate||''} / ${o.mgrTel||''}`],['소방안전관리보조자',o.assistant=='있음'?(o.assistantName||'있음'):'없음']])}
+<h3>2. 소방·방화시설, 전기·가스·위험물 현황 (제2호)</h3>${tb([['소방시설',sys.join(', ')||'(체크 없음)'],['방화·피난시설',pr.join(', ')||'(체크 없음)'],['방화문 / 방화구획',`${o.fireDoors||'-'}개 / ${o.fireZones||'-'}개 층`],['전기(수전 용량)',o.power?o.power+' kW':''],['가스',o.gas],['위험물',o.hazmat=='있음'?(o.hazmatDesc||'있음'):'저장·취급 없음']])}
+<h3>3. 화재 예방을 위한 자체점검계획 및 대응대책 (제3호)</h3><p><b>주요 위험요인:</b> ${RISK[o.use]||RISK['기타']}</p><ul><li>매월 ${o.monthlyDay||5}일 소방안전관리자가 피난·방화시설, 소방시설, 화기 취급 상태를 점검하고 업무수행기록표에 기록한다.</li><li>불량 사항은 즉시 관계인에게 알리고 보수 일정을 정해 조치 결과를 기록한다.</li><li>퇴근·영업 종료 시 전기 기구 전원 차단과 화기 사용처 확인을 생활화한다.</li></ul>
+<h3>4. 소방시설·피난시설·방화시설 점검·정비계획 (제4호)</h3>${tb([['작동점검',o.opMonth||'-'],['종합점검',o.fullMonth||'-'],['점검 결과',' 점검 끝난 날부터 15일 이내 관할 소방서 보고, 점검기록표 30일 이상 게시, 결과 2년 보관']])}<table>${monthsRows}</table>
+<h3>5. 방화구획·방화문 등 방화시설 유지관리 (제6호)</h3><ul><li>방화문은 항상 닫힌 상태(또는 화재 시 자동 닫힘)로 유지하고 고임목·적치물을 두지 않는다.</li><li>계단·복도·비상구에 물건을 쌓지 않으며 피난 통로를 늘 비워 둔다.</li><li>방화구획 관통부 마감 훼손, 방염물품 교체 여부를 월간 점검에서 확인한다.</li></ul>
+<h3>6. 소방안전교육 계획 (제7호)</h3><p>${dm}월에 근무자·입주자 대상 소방안전교육을 실시한다(소화기·옥내소화전 사용법, 119 신고 요령, 피난 방법). 신규 근무자는 배치 때 교육한다.</p>
+<h3>7. 공사·보수 시 소방안전관리 (제10호)</h3><p>${o.construction=='있음'?'올해 공사 계획이 있으므로 ':''}용접·절단 등 화기 작업 전 작업 허가, 주변 가연물 제거, 소화기 비치, 화재감시자 배치, 작업 후 30분 이상 잔불 확인을 한다.</p>
+<h3>8. 소화 및 연소 방지 (제11호)</h3><p>화재 발견 즉시 경보를 울리고 초기소화반이 소화기·옥내소화전으로 진화하며, 확산 시 방화문을 닫아 연기와 불길을 막고 대피한다.</p>
+${o.hazmat=='있음'?`<h3>9. 위험물 저장·취급 (제12호)</h3><p>${esc(o.hazmatDesc)} 저장소는 화기 엄금 표지, 누출 방지, 지정수량 확인, 소화기 비치를 유지한다.</p>`:''}
+<h3>${o.hazmat=='있음'?10:9}. 소방안전관리 업무 기록·유지 (제13호)</h3><p>업무수행기록표를 월 1회 이상 작성하고 ${esc(o.keep)}한다.</p>${o.split=='해당'?'<p>권원이 분리된 대상물로 공동 소방안전관리 협의회를 구성해 연 1회 이상 협의한다.</p>':''}</div>
+<div class="chap"><h2>제2장 자위소방대 운영계획</h2><h3>1. 자위소방대 조직 (제9호)</h3>${crewTable(o)}
+<h3>2. 화재 시 초기대응 절차 (제14호)</h3><p>① 화재 발견·“불이야” 전파, 비상벨 → ② 119 신고(주소·건물명·층·불 난 곳) → ③ 초기 소화(소화기·옥내소화전) → ④ 피난 유도(엘리베이터 사용 금지, 낮은 자세) → ⑤ 집결지(${esc(o.assembly||'지정 장소')}) 인원 확인 → ⑥ 소방대 도착 시 상황 전달</p>
+<h3>3. 소방훈련 계획 (제8호)</h3>${tb([['시기',dm+'월 (연 1회 이상)'],['내용','소화·통보·피난 합동훈련'],['대상','자위소방대원 및 근무자·입주자'],['기록','훈련 결과 기록부 작성 후 2년 보관']])}</div>
+<div class="chap"><h2>제3장 피난계획 (제5호)</h2>${tb([['피난층',o.exitFloor],['직통계단',(o.stairs||'-')+'개소'],['특별피난계단',o.specialStairs],['옥상 대피',o.roof],['비상 집결지',o.assembly],['화재안전취약자',o.vuln=='있음'?`있음 (${o.vulnCount||'-'}명)`:'없음']])}
+<ul><li>층별로 가장 가까운 계단을 통해 피난층(${esc(o.exitFloor)})으로 대피하고 집결지에서 인원을 확인한다.</li>${o.vuln=='있음'?'<li>취약자는 피난유도반이 1:1로 보조하며 이동이 어려우면 연기가 덜 찬 방화구획 안에서 구조를 기다리게 하고 소방대에 위치를 알린다.</li>':''}<li>피난 경로도를 층별 계단·출입구 근처에 게시한다.</li></ul>
+<h3>소방서장 요청 사항 (제15호)</h3><table><tr><td style="height:60px">&nbsp;</td></tr></table>
+<p style="font-size:11px;color:#777">이 문서는 입력값으로 자동 작성된 초안입니다. 등급·점검 시기는 참고용이며 관할 소방서 기준과 실제 현장에 맞게 확인 후 사용하세요.</p></div>`;
+const d=document.getElementById('doc');d.innerHTML=h;d.classList.add('on');document.querySelector('main').style.display='none';window.scrollTo(0,0)}
+document.getElementById('makeDoc').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i)){show(i);return}save();buildDoc()};
+// 업무수행기록표 12개월 (화재예방법 시행규칙 별지 제12호서식, 2025-10-31 서식 대조, 제10조: 월 1회 이상 작성·2년 보관)
+const CHK={'소화기':'소화기 위치·압력계 정상 범위·외관','자동소화장치':'주방 자동소화장치 감지부·약제 용기','옥내소화전':'옥내소화전함 호스·관창, 방수구 주변 장애물','옥외소화전':'옥외소화전 주변 장애물·호스함','스프링클러':'스프링클러 헤드 주변 장애물, 알람밸브 압력계','간이스프링클러':'간이스프링클러 헤드·밸브 개폐 상태','물분무 등 소화설비':'물분무 등 소화설비 수동조작함·약제 저장용기','자동화재탐지설비':'감지기 탈락·훼손, 발신기 표시등','비상경보설비':'비상벨 표시등·음향','비상방송설비':'비상방송 스피커·음량','자동화재속보설비':'자동화재속보설비 전원·연동','가스누설경보기':'가스누설경보기 전원','유도등·유도표지':'유도등 점등·유도표지 가림 여부','비상조명등':'비상조명등 점등','피난기구(완강기 등)':'완강기 등 피난기구 위치·표지','제연설비':'제연설비 댐퍼·수동기동장치','연결송수관':'연결송수관 송수구 주변 장애물','연결살수설비':'연결살수설비 송수구','비상콘센트':'비상콘센트 전원 표시등','무선통신보조설비':'무선통신보조설비 접속단자','소화용수설비':'소화용수설비 주변 장애물'};
+const SEASON=['난방기·전열기 사용, 배관 동파 방지','난방기·전열기 사용, 배관 동파 방지','봄철 건조기 쓰레기·외부 가연물 정리','봄철 건조기 흡연 장소 관리','외부 적치물·쓰레기 소각 금지 확인','장마 대비 전기설비 누수·누전 확인','장마·집중호우 시 수신기·펌프실 침수 확인','냉방기 과부하·멀티탭 사용 확인','추석 연휴 전 전기·가스 차단 안내','가을철 건조기 외부 가연물 정리','난방기 사용 시작 전 전열기 점검','연말 장식물(방염 여부)·난방기 사용 확인'];
+function buildLog(){const o=data(),g=grade(o)||'',sys=o.sys||[],pr=o.proof||[],y=new Date().getFullYear(),day=String(Math.min(28,Math.max(1,+o.monthlyDay||5))).padStart(2,'0'),dm=parseInt(o.drillMonth)||5;
+const ck=(on,t)=>(on?'[√]':'[ ]')+t;const gl=['특급','1급','2급','3급'].map(x=>ck(g==x,x)).join(' ');
+const sysTxt='수신기(경보설비)·제어반·가압송수장치(펌프) 상태 중점 확인'+(sys.length?', '+sys.map(s=>CHK[s]||s).join(', '):'');
+const evac='방화문 닫힘 상태·고임목, 계단·복도·비상구 적치물'+(pr.includes('방화셔터')?', 방화셔터 작동 장애물':'')+(pr.includes('방염 커튼·카펫 사용')?', 방염물품 훼손·교체':'')+(pr.includes('피난유도선')?', 피난유도선':'')+(o.vuln=='있음'?', 취약자 피난 보조 동선':'');
+const fireUse=(RISK[o.use]||RISK['기타']).split(',').slice(0,2).join(',')+' 관련 화기·전기 사용 상태, 흡연 장소'+(o.gas!='사용 안 함'?', '+o.gas+' 사용처':'')+(o.construction=='있음'?', 공사 화기작업 허가·화재감시자':'');
+const res='[ ] 양호<br>[ ] 불량';
+const pages=[...Array(12)].map((_,i)=>{const m=i+1,ex=[SEASON[i]];if((o.opMonth||'').startsWith(m+'월'))ex.push('작동점검 실시·결과 15일 내 보고');if((o.fullMonth||'').startsWith(m+'월'))ex.push('종합점검 실시·결과 15일 내 보고');if(m==dm)ex.push('소방훈련·교육 실시, 결과 기록부 작성');if(o.hazmat=='있음')ex.push('위험물 저장 상태');
+return `<div class="log${i?' chap':''}"><p style="font-size:10px;margin:0">■ 화재의 예방 및 안전관리에 관한 법률 시행규칙 [별지 제12호서식]</p><h2 style="text-align:center;border:0">소방안전관리자 업무 수행 기록표 <small>(${y}년 ${m}월)</small></h2><p style="font-size:11px;margin:0">※ [ ]에는 해당되는 곳에 √표를 합니다.</p>
+<table class="lt"><tr><th>수행일자</th><td>${y}. ${m}. ${day}.</td><th>수행자</th><td>${esc(o.mgr)} (서명)</td></tr>
+<tr><th rowspan="3">소방안전<br>관리대상물</th><td colspan="3">상호: ${esc(o.bName)}　　등급: ${gl}</td></tr><tr><td colspan="3">소재지: ${esc(o.addr)}</td></tr><tr><td colspan="3">지하층: ${esc(o.floorsDown||0)}　지상층: ${esc(o.floorsUp||0)}　연면적(㎡): ${esc(o.area)}　바닥면적(㎡):　　　동수:　　</td></tr></table>
+<table class="lt"><tr><th>항 목</th><th style="width:46%">확인내용</th><th style="width:13%">확인결과</th><th style="width:21%">조치사항</th></tr>
+<tr><th>소방시설</th><td>${esc(sysTxt)}</td><td>${res}</td><td></td></tr><tr><th>피난방화시설</th><td>${esc(evac)}</td><td>${res}</td><td></td></tr><tr><th>화기취급감독</th><td>${esc(fireUse)}</td><td>${res}</td><td></td></tr><tr><th>기타사항</th><td>${esc(ex.join(', '))}</td><td>${res}</td><td></td></tr></table>
+<table class="lt"><tr><th rowspan="2">불량사항<br>개선보고</th><th>보고일시</th><th>보고방법</th><th>보고받은 사람</th></tr><tr><td>　　.　　.　　.</td><td>[ ]대면 [ ]서면 [ ]정보통신</td><td>${esc(o.owner||'')}</td></tr><tr><th>조치방법</th><td colspan="3">[ ]이전 [ ]제거 [ ]수리·교체 [ ]기타</td></tr></table>
+<p style="font-size:10.5px;line-height:1.5">※ 작성요령<br>1. 소방안전관리대상물의 소방안전관리자는 소방안전관리업무를 수행한 날을 포함하여 월 1회 이상 작성<br>2. 당해연도 소방계획서 및 소방시설등(최초점검, 작동점검, 종합점검) 점검표에 따른 점검항목을 참고하여 작성<br>3. 소방안전관리대상물의 특성에 따라 기타사항에 추가항목을 작성<br>4. 경보설비의 수신기, 소화설비의 제어반 및 가압송수장치(펌프 등)를 중점적으로 확인하여 작성<br>※ 작성한 날부터 2년간 보관(시행규칙 제10조 제3항). 보수·정비가 필요한 사항은 지체 없이 관계인에게 알리고 기록(같은 조 제2항).</p></div>`}).join('');
+const d=document.getElementById('doc');d.innerHTML=`<div class="tool"><button type="button" onclick="window.print()">인쇄 / PDF로 저장</button><button type="button" class="back" onclick="document.getElementById('doc').classList.remove('on');document.querySelector('main').style.display=''">입력 화면으로</button></div><div class="wm">무료 체험본</div><style>#doc .lt th{width:auto;text-align:center;font-size:12px}#doc .lt td{font-size:12px;line-height:1.5}#doc .log h2{margin:6px 0}</style>`+pages;d.classList.add('on');document.querySelector('main').style.display='none';window.scrollTo(0,0)}
+function buildDrill(){const o=data(),g=grade(o)||'',sys=o.sys||[],y=new Date().getFullYear(),dm=parseInt(o.drillMonth)||5,n=Math.max(1,+o.crew||1);
+const ck=(on,t)=>(on?'[√]':'[ ]')+t;const gl=['특급','1급','2급','3급'].map(x=>ck(g==x,x)).join(' ');
+const c=[0,0,0,0];for(let i=0;i<n-1;i++)c[i%4]++;const nz=v=>v?v:'대장 겸임';
+const hyd=sys.includes('옥내소화전'),sp=sys.includes('스프링클러')||sys.includes('간이스프링클러'),ann=sys.includes('비상방송설비');
+const main=['자위소방대 편성 상태 점검(대장·통보연락·초기소화·피난유도·비상연락 임무 확인)','초기대응체계 점검(이용 시간 중 상시 운영 인원 확인)','화재 발생 초기대응 기본 요령: 화재 발견 시 "불이야" 전파·발신기 누름·119 신고'+(ann?'·비상방송':''),'소화기'+(hyd?'·옥내소화전':'')+' 사용법 실습'+(sp?', 스프링클러 작동 시 대응':''),'피난 경로·비상구·'+(o.assembly?'집결지('+o.assembly+')':'집결지')+' 확인 및 인원 확인 방법'];if(o.vuln=='있음')main.push('화재안전취약자 피난 보조 담당·이동 방법');if(o.gas&&o.gas!='사용 안 함')main.push(o.gas+' 차단 밸브 위치·차단 요령');
+const mr=(nm,dt,role)=>`<tr><td>${esc(nm)}</td><td>${esc(dt||'')}</td><td>소방안전관리자</td><td>${esc(role)}</td><td>${role=='주'?'[√]주 [ ]보조':'[ ]주 [√]보조'}</td><td>${role=='주'?esc(o.mgrTel||''):''}</td><td></td></tr>`;
+const blank='<tr><td>　</td><td></td><td></td><td></td><td>[ ]주 [ ]보조</td><td></td><td></td></tr>';
+let mrows=mr(o.mgr,o.mgrDate,'주')+(o.assistant=='있음'&&o.assistantName?mr(o.assistantName,'','보조'):'');while((mrows.match(/<tr>/g)||[]).length<4)mrows+=blank;mrows=mrows.replace(/<td>소방안전관리자<\/td><td>보조<\/td>/,'<td>소방안전관리보조자</td><td>보조</td>').replace(/<td>소방안전관리자<\/td><td>주<\/td>/,'<td>소방안전관리자</td><td>'+esc(o.mgrGrade||'')+'</td>');
+const roles=[['대장',o.mgr]];['통보연락','초기소화','피난유도','비상연락'].forEach((t,i)=>{for(let k=0;k<c[i];k++)roles.push([t,''])});const leads=(o.floorLeads||'').split(',').map(s=>s.trim()).filter(Boolean);leads.forEach((l,i)=>{if(roles[i+1])roles[i+1][1]=l});
+const at=[...Array(25)].map((_,i)=>{const a=roles[i]||['',''],b=roles[i+25]||['',''];return `<tr><td>${i+1}</td><td>${esc(a[0])}</td><td>${esc(a[1])}</td><td></td><td>${i+26}</td><td>${esc(b[0])}</td><td>${esc(b[1])}</td><td></td></tr>`}).join('');
+const page=`<div class="log"><p style="font-size:10px;margin:0">■ 화재의 예방 및 안전관리에 관한 법률 시행규칙 [별지 제13호서식]</p><h2 style="text-align:center;border:0">자위소방대 및 초기대응체계 교육ㆍ훈련 실시 결과 기록부</h2><p style="font-size:11px;margin:0">※ [ ]에는 해당되는 곳에 √표를 합니다.<span style="float:right">(앞쪽)</span></p>
+<table class="lt"><tr><th>작성일자</th><td>${y}.　${dm}.　　.</td><th>작성자</th><td>${esc(o.mgr)}　(서명)</td></tr></table>
+<table class="lt"><tr><th rowspan="4">소방안전<br>관리대상물</th><th>대상명</th><td>${esc(o.bName)}</td><th>대표자</th><td>${esc(o.owner||'')}</td></tr><tr><th>소재지</th><td>${esc(o.addr)}</td><th>전화번호</th><td>${esc(o.ownerTel||'')}</td></tr>
+<tr><th>근무인원</th><td colspan="3">평일 주간(　:　~　:　)　　명 / 야간(　:　~　:　)　　명<br>휴일 주간(　:　~　:　)　　명 / 야간(　:　~　:　)　　명</td></tr><tr><th>등급</th><td colspan="3">${gl}</td></tr></table>
+<table class="lt"><tr><th rowspan="5" style="width:12%">소방안전<br>관리자</th><th>성명</th><th>선임일자</th><th>보유자격</th><th>자격구분</th><th>주/보조</th><th>연락처</th><th>비고</th></tr>${mrows.replace(/<tr><td>/g,'<tr><td>').replace(/<td>\[/g,'<td>[')}</table>
+<table class="lt"><tr><th rowspan="3" style="width:12%">자위소방대</th><th>총원(명)</th><th>대장성명</th><th>부대장(명)</th><th>통보연락(명)</th><th>초기소화(명)</th></tr><tr><td>${n}</td><td>${esc(o.mgr)}</td><td>-</td><td>${nz(c[0])}</td><td>${nz(c[1])}</td></tr>
+<tr><th>대장연락처</th><td colspan="2">${esc(o.mgrTel||'')}</td><th>피난유도(명)</th><td>${nz(c[2])}　비상연락(명): ${nz(c[3])}</td></tr>
+<tr><th>초기대응체계<br>조직구성</th><th>총원(명)</th><td colspan="4">${n}　(이용 시간 중 근무자로 편성)</td></tr></table>
+<table class="lt"><tr><th rowspan="6" style="width:12%">교육ㆍ훈련<br>결과</th><th rowspan="2">인원</th><th colspan="3">자위소방대</th><th colspan="3">초기대응</th></tr><tr><td>총원 ${n}명</td><td>참석　　명</td><td>미참석　　명</td><td>총원 ${n}명</td><td>참석　　명</td><td>미참석　　명</td></tr>
+<tr><th>일시/장소</th><td colspan="6">${y}. ${dm}.　　.　　:　　~　　:　　 / ${esc(o.bName)} ${esc(o.exitFloor||'1층')} 및 ${esc(o.assembly||'비상 집결지')}</td></tr>
+<tr><th>주요내용</th><td colspan="6">${main.map((t,i)=>(i+1)+'. '+esc(t)).join('<br>')}</td></tr><tr><th>보완사항</th><td colspan="6" style="height:50px"></td></tr><tr><th>조치사항</th><td colspan="6" style="height:50px"></td></tr></table>
+<p style="font-size:10.5px">※ 연 1회 이상 자위소방대를 소집해 편성 상태·초기대응체계를 점검하고 교육 실시(시행규칙 제11조 제5항). 소방훈련과 병행 가능(같은 조 제6항). 실시한 날부터 2년간 보관(같은 조 제7항).</p></div>
+<div class="log chap"><p style="font-size:11px;margin:0;text-align:right">(뒤쪽)</p><h3>□ 교육ㆍ훈련 참석확인</h3><table class="lt"><tr><th>연번</th><th>직책</th><th>성명</th><th>확인</th><th>연번</th><th>직책</th><th>성명</th><th>확인</th></tr>${at}</table></div>`;
+const d=document.getElementById('doc');d.innerHTML=`<div class="tool"><button type="button" onclick="window.print()">인쇄 / PDF로 저장</button><button type="button" class="back" onclick="document.getElementById('doc').classList.remove('on');document.querySelector('main').style.display=''">입력 화면으로</button></div><div class="wm">무료 체험본</div><style>#doc .lt th{width:auto;text-align:center;font-size:12px}#doc .lt td{font-size:12px;line-height:1.5}#doc .log h2{margin:6px 0}</style>`+page;d.classList.add('on');document.querySelector('main').style.display='none';window.scrollTo(0,0)}
+function buildTrain(){const o=data(),g=grade(o)||'',sys=o.sys||[],y=new Date().getFullYear(),dm=parseInt(o.drillMonth)||5,n=Math.max(1,+o.crew||1),tgt=+o.capacity||n;
+const ck=(on,t)=>(on?'[√]':'[ ]')+t;const gl=['특급','1급','2급','3급'].map(x=>ck(g==x,x)).join(' ');const top=g=='특급'||g=='1급';
+const hyd=sys.includes('옥내소화전'),sp=sys.includes('스프링클러')||sys.includes('간이스프링클러'),ann=sys.includes('비상방송설비'),bell=sys.includes('비상벨')||sys.includes('자동화재탐지설비')||sys.includes('비상경보설비');
+const gasOn=o.gas&&o.gas!='사용 안 함',vul=o.vuln=='있음',place=`${o.bName} ${o.exitFloor||'1층'} 및 ${o.assembly||'비상 집결지'}`;
+const mat=['소화기(훈련용 또는 실물)'];if(hyd)mat.push('옥내소화전 호스·노즐');mat.push(bell?'발신기·경종':'휴대용 경보기(호루라기)');if(ann)mat.push('비상방송설비');mat.push('피난안내도','인원 확인 명단');if(vul)mat.push('피난 보조 장비(휠체어 등)');
+const fire=['소화기 사용: 안전핀 뽑기 → 노즐을 불 쪽으로 → 손잡이 움켜쥐기 → 비로 쓸듯 분사'];if(hyd)fire.push('옥내소화전 2인 1조 방수(문 열기·호스 펴기·밸브 열기·관창 잡기)');if(sp)fire.push('스프링클러 작동 시 대응·제어밸브 위치 확인');if(gasOn)fire.push(o.gas+' 중간 밸브 차단');
+const call=['"불이야" 큰 소리 전파'+(bell?'·발신기 누름':''),`119 신고: "${o.addr||'주소'} ${o.bName||''}, 몇 층 무엇이 타는지"`];if(ann)call.push('비상방송으로 대피 안내');call.push('관계인·관리자 비상연락');
+const ev=[`피난층(${o.exitFloor||'1층'})으로 계단 대피, 승강기 사용 금지`,`직통계단 ${o.stairs||1}곳 위치 확인`,`집결지(${o.assembly||'비상 집결지'}) 집결 후 인원 확인`,'젖은 수건으로 코·입 막고 낮은 자세 이동'];if(o.roof=='가능')ev.push('계단 막힐 때 옥상 대피');if(vul)ev.push(`화재안전취약자${o.vulnCount?' '+o.vulnCount+'명':''} 피난 보조`);
+const edu=[`${o.use||'건물'} 화재 위험요인과 예방 수칙`,'설치 소방시설 위치와 사용법: '+(sys.length?sys.join(', '):'소화기'),'화재 발견 시 행동요령(전파·신고·초기소화·대피)','피난 경로·비상구·집결지와 방화문 닫힘 유지'];if(gasOn)edu.push(o.gas+' 누설 시 조치와 차단 밸브 위치');if(o.hazmat=='있음')edu.push('위험물('+(o.hazmatDesc||'저장 품목')+') 취급 주의사항');edu.push('소방훈련·교육 연 1회 이상 실시 의무(시행규칙 제36조)');
+const L=a=>a.map(t=>'· '+esc(t)).join('<br>');
+const mr=(nm,dt,gr,main,tel)=>`<tr><td>${esc(nm||'')}</td><td>${esc(dt||'')}</td><td>${esc(gr||'')}</td><td>${main?'[√]주 [ ]보조':'[ ]주 [√]보조'}</td><td>${esc(tel||'')}</td></tr>`;
+let mrows=mr(o.mgr,o.mgrDate,(o.mgrGrade||'')+' 소방안전관리자',1,o.mgrTel)+(o.assistant=='있음'&&o.assistantName?mr(o.assistantName,'','소방안전관리보조자',0,''):'');while((mrows.match(/<tr>/g)||[]).length<4)mrows+='<tr><td>　</td><td></td><td></td><td>[ ]주 [ ]보조</td><td></td></tr>';
+const R=(h,c,ht)=>`<tr><th>${h}</th><td colspan="4"${ht?` style="height:${ht}px"`:''}>${c}</td></tr>`;
+const ph=t=>`<td style="height:190px;vertical-align:bottom;text-align:center;font-size:12px;color:#666">${t}</td>`;
+const page=`<div class="log"><p style="font-size:10px;margin:0">■ 화재의 예방 및 안전관리에 관한 법률 시행규칙 [별지 제28호서식]</p><h2 style="text-align:center;border:0">소방훈련ㆍ교육 실시 결과 기록부</h2><p style="font-size:11px;margin:0">※ [ ]에는 해당되는 곳에 √표를 합니다.<span style="float:right">(앞쪽)</span></p>
+<table class="lt"><tr><th rowspan="4" style="width:13%">소방안전<br>관리대상물</th><th>대상명</th><td>${esc(o.bName)}</td><th>용도</th><td>${esc(o.use||'')}</td></tr><tr><th>대표자</th><td>${esc(o.owner||'')}　　(서명)</td><th>전화번호</th><td>${esc(o.ownerTel||'')}</td></tr><tr><th>주소</th><td colspan="3">${esc(o.addr)}</td></tr><tr><th>등급</th><td colspan="3">${gl}</td></tr></table>
+<table class="lt"><tr><th rowspan="5" style="width:13%">소방안전<br>관리자</th><th>성명</th><th>선임일자</th><th>보유자격</th><th>자격구분</th><th>연락처</th></tr>${mrows}</table>
+<table class="lt"><tr><th rowspan="9" style="width:13%">소방훈련<br>결과</th><th>일시/장소</th><td colspan="4">${y}. ${dm}.　　.　　:　　~　　:　　 / ${esc(place)}<br>[√] 자체훈련　[ ] 합동훈련</td></tr>
+<tr><th rowspan="2">참석결과</th><th>훈련교관</th><th>참석대상(명)</th><th>참석(명)</th><th>미참석(명)</th></tr><tr><td>${esc(o.mgr)}</td><td>${tgt}</td><td></td><td></td></tr>
+${R('훈련보조재료',L(mat))}<tr><th rowspan="2">훈련내용</th><th>소화훈련</th><th colspan="2">통보훈련</th><th>피난훈련</th></tr><tr><td style="vertical-align:top">${L(fire)}</td><td colspan="2" style="vertical-align:top">${L(call)}</td><td style="vertical-align:top">${L(ev)}</td></tr>
+${R('훈련성과','',36)}${R('문제점','',36)}${R('개선계획','',36)}</table>
+<p style="font-size:10.5px">※ 연 1회 이상 실시(시행규칙 제36조 제1항), 실시한 날부터 2년간 보관(같은 조 제4항).${top?' 특급·1급은 30일 이내 별지 제29호서식 결과서를 소방서에 제출(같은 규칙 제37조).':''}</p></div>
+<div class="log chap"><p style="font-size:11px;margin:0;text-align:right">(뒤쪽)</p><table class="lt"><tr><th rowspan="7" style="width:13%">소방교육<br>결과</th><th>일시/장소</th><td colspan="4">${y}. ${dm}.　　.　　:　　~　　:　　 / ${esc(o.bName)} ${esc(o.exitFloor||'1층')}</td></tr>
+<tr><th rowspan="2">참석결과</th><th>교육강사</th><th>참석대상(명)</th><th>참석(명)</th><th>미참석(명)</th></tr><tr><td>${esc(o.mgr)}</td><td>${tgt}</td><td></td><td></td></tr>
+${R('교육내용',L(edu))}${R('교육성과','',45)}${R('문제점','',45)}${R('개선계획','',45)}</table>
+<h3 style="text-align:center">소방훈련ㆍ교육 관련사진</h3><table class="lt"><tr>${ph('소방훈련')}${ph('소방훈련')}</tr><tr>${ph('소방교육')}${ph('소방교육')}</tr></table></div>`;
+const d=document.getElementById('doc');d.innerHTML=`<div class="tool"><button type="button" onclick="window.print()">인쇄 / PDF로 저장</button><button type="button" class="back" onclick="document.getElementById('doc').classList.remove('on');document.querySelector('main').style.display=''">입력 화면으로</button></div><div class="wm">무료 체험본</div><style>#doc .lt th{width:auto;text-align:center;font-size:12px}#doc .lt th{white-space:nowrap;padding:3px 5px}#doc .lt td{font-size:11px;line-height:1.35;padding:3px 5px}#doc .log h2{margin:6px 0}</style>`+page;d.classList.add('on');document.querySelector('main').style.display='none';window.scrollTo(0,0)}
+function buildPost(){const o=data(),sys=o.sys||[],y=new Date().getFullYear(),fu=+o.floorsUp||1,fd=+o.floorsDown||0;
+const ck=(on,t)=>(on?'[√] ':'[ ] ')+t;const spOn=sys.includes('스프링클러');const spR=(fd?'지하 '+fd:'1')+'층 ~ '+fu+'층';
+const opM=parseInt(o.opMonth),fuM=parseInt(o.fullMonth);const kinds=[];if(fuM)kinds.push(['종합점검',fuM,'']);if(opM)kinds.push(['작동점검',opM,o.mgr||'']);if(!kinds.length)kinds.push(['작동점검',0,o.mgr||'']);kinds.sort((a,b)=>a[1]-b[1]);
+const B='rgb(65,143,222)';const row=(k,v)=>`<tr><td style="width:120px;color:${B};font-weight:bold;white-space:nowrap;vertical-align:top">· ${k}</td><td style="width:14px;vertical-align:top">:</td><td>${v}</td></tr>`;
+const card=([kind,m,who],i)=>`<div class="post${i?' chap':''}"><div style="border:7px solid ${B};padding:6px"><div style="border:5px solid rgb(193,214,237);padding:18px 34px 16px">
+<div style="text-align:center;color:${B};font-size:34px;font-weight:900;letter-spacing:2px;margin:2px 0 14px">소방시설등 자체점검기록표</div>
+<table style="width:100%;border-collapse:collapse;font-size:16px;line-height:1.9">${row('대 상 물 명',esc(o.bName||''))}${row('주　　　소',esc(o.addr||''))}${row('점 검 구 분',ck(kind=='작동점검','작동점검')+'　　　　　'+ck(kind=='종합점검','종합점검'))}${row('점 검 자',esc(who)+(who?'':'　'))}${row('점 검 기 간',`${y}년　${m?m+'월':'　월'}　　일　~　${y}년　${m?m+'월':'　월'}　　일`)}${row('보 유 시 설','스프링클러설비　'+ck(spOn,'설치( '+(spOn?spR:'　층 ~ 　층')+' )')+'　　'+ck(!spOn,'미설치'))}${row('불 량 사 항',['소화설비','경보설비','피난구조설비'].map(t=>ck(0,t)).join('　　')+'<br>'+['소화용수설비','소화활동설비','기타설비','없음'].map(t=>ck(0,t)).join('　　'))}${row('정 비 기 간','　　　년　　월　　일　~　　　년　　월　　일')}</table>
+<p style="text-align:right;font-size:16px;margin:10px 30px 8px">　　　년　　　월　　　일</p>
+<p style="font-size:15px;font-weight:bold;margin:0"><span style="color:${B}">「소방시설 설치 및 관리에 관한 법률」</span> 제24조제1항 및 같은 법 시행규칙 제25조에 따라 소방시설등 자체점검결과를 게시합니다.</p></div></div>
+<p style="font-size:11px;color:#555;margin:6px 0 0">※ ${kind} 결과 보고 후 10일 이내 출입자가 잘 보이는 곳에 게시하고, 다음 기록표를 게시할 때까지 유지(시행규칙 제25조, 별표 5 2025.12.1. 개정 서식). 불량사항·정비기간은 점검 결과에 따라 직접 적으세요.</p></div>`;
+const d=document.getElementById('doc');d.innerHTML=`<div class="tool"><button type="button" onclick="window.print()">인쇄 / PDF로 저장</button><button type="button" class="back" onclick="document.getElementById('doc').classList.remove('on');document.querySelector('main').style.display=''">입력 화면으로</button></div><div class="wm">무료 체험본</div><style>@media print{@page{size:A4 landscape;margin:10mm}}#doc .post td{border:0!important;padding:1px 4px!important;background:none!important}</style>`+kinds.map(card).join('');d.classList.add('on');document.querySelector('main').style.display='none';window.scrollTo(0,0)}
+document.getElementById('makePost').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i)){show(i);return}save();buildPost()};
+document.getElementById('makeTrain').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i)){show(i);return}save();buildTrain()};
+document.getElementById('makeDrill').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i)){show(i);return}save();buildDrill()};
+document.getElementById('makeLog').onclick=()=>{for(let i=0;i<4;i++)if(!valid(i)){show(i);return}save();buildLog()};
+</script>
+</body>
+</html>
