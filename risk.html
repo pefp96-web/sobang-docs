@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>위험성평가 초안 만들기 | 안전관리자노트</title>
+<style>
+body{font-family:'Malgun Gothic',-apple-system,sans-serif;margin:0;background:#f4f5f7;color:#111;font-size:16px}
+header{background:#1b5e20;color:#fff;padding:14px 16px}header h1{font-size:18px;margin:0}header p{margin:4px 0 0;font-size:13px}
+main{padding:12px;max-width:760px;margin:auto}section{background:#fff;border-radius:10px;padding:12px;margin-bottom:12px}
+h2{font-size:16px;margin:0 0 8px}label{display:block;font-size:13px;color:#444;margin:8px 0 3px}
+input,select,textarea{width:100%;box-sizing:border-box;padding:10px;font-size:16px;border:1px solid #ccc;border-radius:8px}
+.row{display:flex;gap:8px}.row>*{flex:1}button{font-size:16px;padding:12px;border-radius:8px;border:0;background:#333;color:#fff;width:100%;margin-top:8px}
+button.sub{background:#e0e0e0;color:#111}button.main{background:#1b5e20;font-weight:bold}.item{border:1px solid #ddd;border-radius:8px;padding:10px;margin-top:10px;background:#fafafa}
+.hz{display:flex;gap:6px;align-items:center;margin:4px 0}.hz span{flex:1;font-size:14px}.note{font-size:12px;color:#666;line-height:1.5}
+.warn{border:2px solid #1b5e20;color:#1b5e20;padding:8px;border-radius:8px;font-size:13px;font-weight:bold}
+</style></head><body>
+<header><h1>위험성평가 초안 만들기</h1><p>작업만 적으면 유해·위험요인과 감소대책을 추천하고, 실시 결과 기록 초안(PDF 인쇄용)을 만듭니다.</p></header>
+<main>
+<div class="warn">초안 도구입니다. 위험성 판단과 대책은 사업장이 근로자와 함께 확인·결정해야 합니다(사업장 위험성평가에 관한 지침). 입력값은 이 기기에만 저장됩니다.</div>
+<section><h2>1. 사업장</h2>
+<label>사업장명</label><input id="s_name"><div class="row"><div><label>업종</label><input id="s_type" placeholder="예: 제조업(금속가공)"></div><div><label>상시 근로자 수</label><input id="s_n" inputmode="numeric"></div></div>
+<div class="row"><div><label>평가 구분</label><select id="s_kind"><option>최초평가</option><option>정기평가</option><option>수시평가</option><option>상시평가</option></select></div><div><label>평가일</label><input id="s_date" type="date"></div></div>
+<div class="row"><div><label>평가 담당(관리감독자)</label><input id="s_mgr"></div><div><label>참여 근로자</label><input id="s_wk"></div></div></section>
+<section><h2>2. 작업(공정)별 위험요인</h2><p class="note">작업 이름과 내용을 적고 '위험요인 추천'을 누르세요. 맞는 것만 체크하고 위험성(상·중·하)을 고르면 됩니다.</p>
+<div id="tasks"></div><button class="sub" onclick="addTask()">+ 작업 추가</button></section>
+<section><button class="main" onclick="makeDoc()">위험성평가 실시 결과 초안 보기 / PDF</button>
+<button class="sub" onclick="if(confirm('모두 지울까요?')){localStorage.removeItem(K);location.reload()}">새로 시작</button>
+<p class="note">근거: 산업안전보건법 제36조, 사업장 위험성평가에 관한 지침(고용노동부 고시). 3단계 판단법(상·중·하) 기준. AI 작성 도구로 만든 초안이며 최종 결정·서명은 사업장이 합니다.</p></section>
+</main>
+<script>
+const LIB=[
+ [/사다리|고소|지붕|비계|높은|선반 위|작업대|리프트|사다리차|2m/,'추락','높은 곳 작업 중 떨어짐','안전난간·작업발판 설치, 안전대 착용·부착설비, 사다리는 2인 1조·전도방지'],
+ [/바닥|이동|계단|물기|기름|청소|통로|창고/,'넘어짐','바닥 미끄럼·장애물에 걸려 넘어짐','통로 정리정돈, 미끄럼방지 매트·안전화, 물기·기름 즉시 제거'],
+ [/기계|프레스|롤러|컨베이어|절단|가공|선반|밀링|포장기|혼합|분쇄/,'끼임','기계 회전·작동부에 끼임','방호덮개·연동장치 설치, 정비 시 전원차단·잠금표지(LOTO), 비상정지장치 점검'],
+ [/절단|칼|커터|그라인더|톱|가위/,'베임·절단','날카로운 날·공구에 베임','공구 덮개, 베임방지 장갑, 날 교체 시 전용공구 사용'],
+ [/지게차|운반|차량|트럭|하역|상차|크레인|호이스트|양중/,'부딪힘·깔림','운반장비에 부딪히거나 화물에 깔림','작업지휘자 배치, 보행통로 분리, 후방경보·경광등, 정격하중 준수, 줄걸이 점검'],
+ [/전기|배선|분전반|용접|콘센트|충전|모터/,'감전','충전부 접촉으로 감전','누전차단기·접지, 충전부 덮개, 정전작업 시 잠금표지, 절연장갑'],
+ [/용접|화기|가스|인화|용제|도장|LPG|버너|그라인더/,'화재·폭발','불꽃·인화물질로 화재·폭발','화기작업 허가, 불티비산방지포, 인화물 격리, 소화기 비치, 가스누설 점검'],
+ [/화학|세척제|용제|도장|약품|접착|소독|산|알칼리/,'화학물질 노출','유해물질 흡입·피부 접촉','MSDS 비치·교육, 국소배기장치, 보호구(방독마스크·보호장갑), 경고표지'],
+ [/중량|들기|운반|포장|박스|반복|조립|자세|허리/,'근골격계','무리한 힘·반복 동작으로 허리·어깨 질환','중량물 보조기구, 2인 운반, 작업대 높이 조정, 휴식·스트레칭'],
+ [/더위|고온|여름|야외|주방|열/,'온열질환','고온 환경에서 열사병 등','물·그늘·휴식 제공, 무더위 시간대 작업 조정, 온열질환 교육'],
+ [/소음|프레스|그라인더|기계실|타격/,'소음','소음으로 청력 손상','소음원 차음·방음, 귀마개·귀덮개 지급, 청력 건강검진'],
+ [/분진|먼지|연마|샌딩|목재|분쇄/,'분진','분진 흡입으로 호흡기 질환','국소배기, 습식작업, 방진마스크 착용'],
+ [/밀폐|탱크|맨홀|정화조|지하|저장조/,'질식','산소결핍·유해가스로 질식','작업 전 산소·유해가스 측정, 환기, 감시인 배치, 송기마스크'],
+ [/주방|조리|튀김|칼|오븐/,'화상·베임','뜨거운 기름·물에 화상, 칼에 베임','내열장갑, 칼 보관대, 바닥 미끄럼 방지'],
+ [/고객|민원|상담|판매|응대/,'고객 폭언·폭행','고객 응대 중 폭언·폭행 스트레스','응대 매뉴얼, 휴식 보장, 비상연락 체계'],
+];
+const K='risk_v1'; let S=JSON.parse(localStorage.getItem(K)||'null')||{s:{},t:[]};
+const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+for(const k of ['name','type','n','kind','date','mgr','wk']){const el=$('s_'+k);el.value=S.s[k]||el.value;S.s[k]=el.value;el.oninput=el.onchange=()=>{S.s[k]=el.value;save()}}
+function addTask(){S.t.push({name:'',desc:'',hz:[]});save();render()}
+function suggest(i){const t=S.t[i];const txt=t.name+' '+t.desc;const got=LIB.filter(l=>l[0].test(txt));const add=(got.length?got:LIB.slice(1,3));for(const l of add){if(!t.hz.find(h=>h.k===l[1]))t.hz.push({k:l[1],d:l[2],m:l[3],on:true,r:'중',r2:'하'})}save();render();try{new Image().src='https://hits.sh/pefp96-web.github.io/sobang-docs/risk-suggest.svg?t='+Date.now()}catch(e){}}
+function render(){$('tasks').innerHTML=S.t.map((t,i)=>`<div class="item"><b>작업 ${i+1}</b>
+<label>작업(공정) 이름</label><input data-i="${i}" data-k="name" value="${esc(t.name)}" placeholder="예: 지게차 상하차">
+<label>작업 내용(말하듯이)</label><textarea data-i="${i}" data-k="desc" placeholder="예: 창고에서 지게차로 팔레트 옮기고 사람이 박스 정리">${esc(t.desc)}</textarea>
+<button class="sub" onclick="suggest(${i})">위험요인 추천</button>
+${t.hz.map((h,j)=>`<div class="hz"><input type="checkbox" style="width:auto" data-h="${i},${j}" ${h.on?'checked':''}><span><b>${esc(h.k)}</b> ${esc(h.d)}</span><select data-r="${i},${j}" style="width:80px;padding:6px">${['상','중','하'].map(o=>`<option ${h.r===o?'selected':''}>${o}</option>`).join('')}</select></div>`).join('')}
+<button class="sub" style="color:#b71c1c" onclick="S.t.splice(${i},1);save();render()">이 작업 삭제</button></div>`).join('');
+document.querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>{S.t[el.dataset.i][el.dataset.k]=el.value;save()});
+document.querySelectorAll('[data-h]').forEach(el=>el.onchange=()=>{const[a,b]=el.dataset.h.split(',');S.t[a].hz[b].on=el.checked;save()});
+document.querySelectorAll('[data-r]').forEach(el=>el.onchange=()=>{const[a,b]=el.dataset.r.split(',');S.t[a].hz[b].r=el.value;save()});}
+function makeDoc(){try{new Image().src='https://hits.sh/pefp96-web.github.io/sobang-docs/risk-pdf.svg?t='+Date.now()}catch(e){}
+const s=S.s;let n=0;const rows=S.t.flatMap(t=>t.hz.filter(h=>h.on).map(h=>`<tr><td class="c">${++n}</td><td>${esc(t.name)}</td><td>${esc(h.k)}: ${esc(h.d)}</td><td class="c">${h.r}</td><td>${esc(h.m)}</td><td class="c">${h.r==='상'?'중':'하'}</td><td></td><td></td></tr>`)).join('');
+const html=`<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 landscape;margin:12mm}body{font-family:'Malgun Gothic',sans-serif;font-size:9.5pt}.draft{border:2px solid #c00;color:#c00;padding:4px 8px;font-weight:bold;font-size:9pt}h1{text-align:center;font-size:16pt}table{width:100%;border-collapse:collapse;margin-bottom:8px}th,td{border:1px solid #333;padding:4px 5px}th{background:#eee}.c{text-align:center}.f{font-size:8pt;color:#444}</style></head><body>
+<div class="draft">초안 · AI 작성 도구로 만든 문서입니다. 사업장이 근로자와 함께 확인·결정하고 서명하세요.</div><h1>위험성평가 실시 결과(초안)</h1>
+<table><tr><th>사업장명</th><td>${esc(s.name)}</td><th>업종</th><td>${esc(s.type)}</td><th>상시 근로자</th><td>${esc(s.n)}명</td></tr><tr><th>평가 구분</th><td>${esc(s.kind)}</td><th>평가일</th><td>${esc(s.date)}</td><th>평가 담당</th><td>${esc(s.mgr)}</td></tr><tr><th>참여 근로자</th><td colspan="5">${esc(s.wk)}</td></tr></table>
+<table><tr><th>번호</th><th>작업(공정)</th><th>유해·위험요인</th><th>현재 위험성</th><th>감소대책</th><th>개선 후 위험성</th><th>담당자</th><th>완료 예정일</th></tr>${rows||'<tr><td colspan="8" class="c">선택한 위험요인 없음</td></tr>'}</table>
+<p class="f">판단: 3단계 판단법(상·중·하). 실시 내용과 결과는 기록해 3년간 보존(산업안전보건법 제36조, 같은 법 시행규칙 제37조). 근로자 참여·결과 공유 필요(사업장 위험성평가에 관한 지침).</p>
+<p style="text-align:right">평가 담당: ________ (서명)　　사업주: ________ (서명)</p><script>setTimeout(()=>print(),400)<\/script></body></html>`;
+const w=window.open('','_blank');if(!w){location.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));return}w.document.open();w.document.write(html);w.document.close();}
+if(!S.t.length)addTask();else render();
+try{new Image().src='https://hits.sh/pefp96-web.github.io/sobang-docs/risk-visit.svg?t='+Date.now()}catch(e){}
+</script></body></html>
