@@ -61,7 +61,7 @@ button.main{background:#b71c1c;font-weight:bold}
 <section>
 <button class="main" onclick="makeReport()">보고서 초안 보기 / PDF로 저장</button>
 <button class="sub" onclick="if(confirm('입력한 내용을 모두 지울까요?')){localStorage.removeItem(KEY);location.reload()}">새 점검 시작(모두 지우기)</button>
-<p class="note">입력값과 사진은 이 기기 브라우저에만 저장되고 서버로 보내지 않습니다. 'PDF로 저장'은 인쇄 화면에서 'PDF로 저장'을 고르세요.<br>
+<p class="note">입력값과 사진은 이 기기 브라우저에만 저장되고 서버로 보내지 않습니다(방문·보고서 생성 횟수만 익명으로 셉니다). 'PDF로 저장'은 인쇄 화면에서 'PDF로 저장'을 고르세요.<br>
 서식 근거: 소방시설 설치 및 관리에 관한 법률 시행규칙 별지 제9호서식, 소방시설 자체점검사항 등에 관한 고시 점검표 번호. AI 작성 도구로 만든 초안입니다.</p>
 </section>
 </main>
@@ -209,6 +209,7 @@ function addDefect(){S.불량.push({설비군:'소화설비'});save();renderDefe
 function shrink(file,max,q){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q))};im.src=r.result};r.readAsDataURL(file)})}
 function days(a,b){if(!a||!b)return'';return Math.round((new Date(b)-new Date(a))/864e5)+1}
 function makeReport(){
+ try{new Image().src='https://hits.sh/pefp96-web.github.io/sobang-docs/report-pdf.svg?t='+Date.now();}catch(e){}
  const d={대상물:S.대상물,점검:{...S.점검,일수:days(S.점검.시작,S.점검.끝)},점검인력:S.점검인력,설비:S.설비.filter(e=>e.사용),불량:S.불량};
  const html=점검보고서_HTML(d).replace('</body>','<script>setTimeout(()=>print(),400)<\/script></body>');
  const w=window.open('','_blank');
@@ -216,4 +217,5 @@ function makeReport(){
  w.document.open();w.document.write(html);w.document.close();
 }
 bindTop();renderPeople();renderEqs();renderDefects();
+try{new Image().src='https://hits.sh/pefp96-web.github.io/sobang-docs/report-visit.svg?t='+Date.now();}catch(e){}
 </script></body></html>
