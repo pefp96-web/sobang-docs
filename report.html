@@ -58,6 +58,19 @@ button.main{background:#b71c1c;font-weight:bold}
 <section><h2>5. 불량 사항</h2><div id="defects"></div>
 <button class="sub" onclick="addDefect()">+ 불량 추가 (사진 포함)</button></section>
 
+
+<section><h2>6. 이행계획서·이행완료 보고서 (별지 제10호·제11호)</h2>
+<p class="note">불량 목록에서 바로 만듭니다. 기간은 보고일부터 교체·정비 10일, 철거 후 새로 설치 20일로 자동 계산합니다.</p>
+<div class="row"><div><label>관계인 성명</label><input id="f_관계인"></div><div><label>관계인 전화</label><input id="f_관계인전화" inputmode="tel"></div></div>
+<div class="row"><div><label>소방안전관리자 성명</label><input id="f_관리자"></div><div><label>관리자 전화</label><input id="f_관리자전화" inputmode="tel"></div></div>
+<div class="row"><div><label>보고일</label><input id="f_보고일" type="date"></div><div><label>관할 소방서</label><input id="f_소방서" placeholder="예: 수원남부"></div></div>
+<button class="main" onclick="openDoc(plan10(),'plan10')">이행계획서(별지 제10호) 만들기</button>
+<p class="note" style="margin-top:12px">수리가 끝나면 아래와 불량별 '조치 후 사진·완료일'을 채우고 이행완료 보고서를 만드세요.</p>
+<div class="row"><div><label>공사업체명</label><input id="f_업체명"></div><div><label>사업자번호</label><input id="f_업체번호"></div></div>
+<div class="row"><div><label>대표 성명</label><input id="f_업체대표"></div><div><label>업체 전화</label><input id="f_업체전화" inputmode="tel"></div></div>
+<label>업체 소재지</label><input id="f_업체소재지">
+<button class="main" onclick="openDoc(done11(),'done11')">이행완료 보고서(별지 제11호)+전후 사진 만들기</button>
+</section>
 <section>
 <button class="main" onclick="makeReport()">보고서 초안 보기 / PDF로 저장</button>
 <button class="sub" onclick="if(confirm('입력한 내용을 모두 지울까요?')){localStorage.removeItem(KEY);location.reload()}">새 점검 시작(모두 지우기)</button>
@@ -182,6 +195,7 @@ const SYN = [
  [/가림|막힘|적치|짐|물건|박스|가로막/, '장애 살수장애 장애물'],
  [/소화전|호스|노즐|관창/, '소화전 소화전함 호스'],
  [/펌프|가압\s*송수|모터/, '가압송수장치 펌프'],
+ [/기동|안\s*돌|작동\s*안/, '기동장치 기동압력 기동'],
  [/누수|물\s*샘|새는|부식|녹/, '누수 부식 변형·손상'],
  [/밸브|개폐/, '밸브 개폐'],
  [/압력\s*스위치|압력\s*챔버|챔버/, '수압개폐장치 압력챔버'],
@@ -207,7 +221,7 @@ function bigrams(s){ s=s.replace(/[^가-힣A-Za-z0-9]/g,''); const b=new Set(); 
 function expand(memo){ let e=memo; for (const [re,add] of SYN) if (re.test(memo)) e+=' '+add; return e; }
 
 const EQSEC = {'소화기구':[1],'옥내소화전설비':[2],'스프링클러설비':[3],'자동화재탐지설비':[15],'비상방송설비':[16],'유도등':[21],'비상조명등':[22],'피난기구':[20],'제연설비':[24,25],'연결송수관설비':[26]};
-const SECKEY = [[2,/옥내\s*소화전/],[13,/옥외\s*소화전/],[3,/스프링클러|SP/],[15,/감지기|수신기|발신기|경종|시각\s*경보|자탐|자동화재탐지/],[21,/유도등|유도표지|피난유도선/],[22,/비상조명/],[20,/완강기|피난\s*기구|구조대|피난\s*사다리/],[1,/소화기/],[16,/방송/],[24,/제연|배연/],[26,/송수구|연결\s*송수/],[17,/속보/],[28,/콘센트/]];
+const SECKEY = [[2,/소화전/],[13,/옥외\s*소화전/],[3,/스프링클러|SP/],[15,/감지기|수신기|발신기|경종|시각\s*경보|자탐|자동화재탐지/],[21,/유도등|유도표지|피난유도선/],[22,/비상조명/],[20,/완강기|피난\s*기구|구조대|피난\s*사다리/],[1,/소화기/],[16,/방송/],[24,/제연|배연/],[26,/송수구|연결\s*송수/],[17,/속보/],[28,/콘센트/],[9,/이산화탄소|CO2/],[10,/할론/],[11,/할로겐|불활성|청정/],[12,/분말\s*소화설비/],[6,/물분무/],[7,/미분무/],[8,/포소화/],[2,/옥상\s*수조|수원/]];
 const COMMON = {15:2,1:2,2:1.5,3:1.5,21:1.5,22:1,20:1,16:1,31:1,14:0.5};
 function recommend(memo, kind, n, eqNames){
   n = n||5; const ex = expand(memo); const mb = bigrams(ex); if (!mb.size) return [];
@@ -221,7 +235,9 @@ function recommend(memo, kind, n, eqNames){
     let s=0; for (const g of mb) if (tb.has(g)) s+=1;
     for (const w of terms) { if (sub.includes(w)) s+=6; else if (item.includes(w)) s+=3; else if (sn.includes(w)) s+=2; }
     for (const [sk,re] of SECKEY) if (sk===k && re.test(memo)) s+=5;
-    if (k===13 && /옥내/.test(memo)) s-=8; if (k===2 && /옥외/.test(memo)) s-=8;
+    if (k>=6 && k<=12 && !/물분무|미분무|포소화|포\s|이산화탄소|CO2|할론|할로겐|불활성|청정|분말|가스계/.test(memo)) s-=15;
+    if (k===13 && /옥내/.test(memo)) s-=8;
+    if (/펌프/.test(memo) && /기동|안\s*돌/.test(memo) && /기동장치/.test(item)) s+=8; if (/내연기관/.test(item) && !/엔진|디젤|내연/.test(memo)) s-=25; if (k===2 && /옥외/.test(memo)) s-=8;
     if (/^1-A/.test(no) && /주방|자동소화|후드/.test(memo)) s-=4;
     s += (COMMON[k]||0);
     if (have.has(k)) s += 3;
@@ -243,6 +259,30 @@ function defectText(item){
   return t+' 불량'+tail;
 }
 function fixText(item){ if (/표지|비치|일람도/.test(item)) return '표지·비치물 설치 후 재확인'; if (/설치/.test(item)&&/적정|적합|여부/.test(item)) return '설치기준에 맞게 보완 후 재점검'; if (/작동|점등|음향|시험/.test(item)) return '원인 확인 후 수리 또는 교체, 작동시험 재실시'; if (/압력|내용연수|약제/.test(item)) return '교체 또는 충전 후 재확인'; return '보수 후 재점검'; }
+
+
+function addDays(d,n){ if(!d) return ''; const t=new Date(d); t.setDate(t.getDate()+n); return t.toISOString().slice(0,10); }
+function catOf(x){ const t=(x.점검번호||'')+' '+(x.점검항목||'')+' '+(x.불량내용||'')+' '+(x.현장메모||'');
+  if(/펌프|가압송수|제어반|동력|상용전원|비상전원|예비전원|축전지/.test(t)) return 0;
+  if(/^15-|^14-|수신기|연동|경보음|음향/.test(t)) return 1;
+  if(/배관|밸브.*(폐쇄|차단)|폐쇄|차단/.test(t)) return 2;
+  return 3; }
+const CATL=['소화펌프(가압송수장치를 포함한다), 동력ㆍ감시 제어반 또는 소방시설용 전원(비상전원을 포함한다)의 고장','화재 수신기의 고장으로 화재경보음이 자동으로 울리지 않거나 화재 수신기와 연동된 소방시설의 작동 불량','소화배관 등이 폐쇄ㆍ차단되어 소화수(消火水) 또는 소화약제가 자동 방출 불량','기타 사항'];
+function formHead(title,no){ return '<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4;margin:14mm 13mm 16mm}body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:10pt;color:#111}.page{page-break-after:always}.page:last-child{page-break-after:auto}.draft{border:2px solid #c00;color:#c00;padding:4px 8px;font-weight:bold;font-size:9pt;margin-bottom:6px}.src{font-size:8pt;color:#555;margin:2px 0 6px}h1{font-size:16pt;text-align:center;margin:6px 0 10px;letter-spacing:2px}table{width:100%;border-collapse:collapse;margin-bottom:8px}th,td{border:1px solid #333;padding:5px 6px;vertical-align:middle}th{background:#eee;white-space:nowrap}.c{text-align:center}.foot{font-size:8pt;color:#444}.sign{text-align:right;margin:14px 0}.pair{display:flex;gap:6px}.pair div{flex:1;border:1px solid #333;height:210px;display:flex;align-items:center;justify-content:center;background:#f3f3f3}.pair img{max-width:100%;max-height:206px}</style></head><body>'
+ +'<div class="page"><div class="draft">초안 · AI 작성 도구로 만든 문서입니다. 관계인 확인·서명 전에는 제출하지 마세요.</div><div class="src">「소방시설 설치 및 관리에 관한 법률 시행규칙」 '+no+'</div><h1>'+title+'</h1>'; }
+function headRows(){ const b=S.대상물, R=S.이행||{}; return '<tr><th rowspan="3">특정소방<br>대상물</th><th>대상물 명칭(상호)</th><td>'+esc(b.명칭)+'</td><th>대상물 구분(용도)</th><td>'+esc(b.용도)+'</td></tr><tr><th>관계인</th><td>성명: '+esc(R.관계인)+'<br>전화번호: '+esc(R.관계인전화)+'</td><th>소방안전관리자</th><td>성명: '+esc(R.관리자)+'<br>전화번호: '+esc(R.관리자전화)+'</td></tr><tr><th>소재지</th><td colspan="3">'+esc(b.소재지)+'</td></tr>'; }
+function plan10(){ const R=S.이행||{}; const rd=R.보고일||new Date().toISOString().slice(0,10); const rows=[[],[],[],[]];
+ S.불량.forEach(x=>{ const days=x.조치구분==='철거·신설'?20:10; rows[catOf(x)].push({t:((x.위치&&!(x.불량내용||'').startsWith(x.위치))?x.위치+' ':'')+(x.불량내용||'')+' → '+(x.조치권고||'수리·교체'), s:rd, e:addDays(rd,days)}); });
+ let end=rd; S.불량.forEach(x=>{ const e=addDays(rd,x.조치구분==='철거·신설'?20:10); if(e>end) end=e; });
+ const total=Math.round((new Date(end)-new Date(rd))/864e5);
+ const body=CATL.map((c,i)=>{ const r=rows[i]; if(!r.length) return '<tr><td>'+c+'</td><td class="c">해당 없음</td></tr>'; return r.map((z,j)=>'<tr><td>'+(j===0?c+'<br>':'')+'- '+esc(z.t)+'</td><td class="c">'+z.s+' ~ '+z.e+'</td></tr>').join(''); }).join('');
+ return formHead('소방시설등의 자체점검 결과 이행계획서','[별지 제10호서식]')+'<table>'+headRows()+'</table><table><tr><th colspan="2">이행조치 계획사항</th></tr><tr><th>이행조치 사항</th><th style="width:170px">이행조치 일자</th></tr>'+body+'<tr><th>이행조치 필요기간</th><td class="c">'+rd+' ~ '+end+' (총 '+total+'일)</td></tr></table><p>「소방시설 설치 및 관리에 관한 법률」 제23조제3항 및 같은 법 시행규칙 제23조제2항에 따라 위와 같이 소방시설등의 수리ㆍ교체ㆍ정비에 대한 이행계획서를 제출합니다.</p><div class="sign">'+rd+'<br>관계인: '+esc(R.관계인)+' (서명 또는 인)</div><p>'+esc(R.소방서||'○○')+' 소방본부장ㆍ소방서장 귀하</p><div class="foot">완료기간: 기계ㆍ기구 수리ㆍ교체ㆍ정비는 보고일부터 10일, 전부 또는 일부 철거 후 새로 교체는 20일 이내(시행규칙 제23조제5항). 이행계획서를 첨부하지 않거나 거짓으로 제출한 경우, 연기신청 없이 기간 내 완료하지 않은 경우 300만원 이하 과태료(법 제61조제1항제8호ㆍ제9호).</div></div></body></html>'; }
+function done11(){ const R=S.이행||{}; const today=new Date().toISOString().slice(0,10);
+ const rows=CATL.map((c,i)=>{ const r=S.불량.filter(x=>catOf(x)===i); if(!r.length) return '<tr><td>'+c.replace(/불량$|고장$/,m=>m+'사항 수리')+'</td><td class="c">해당 없음</td></tr>'; return r.map((x,j)=>'<tr><td>'+(j===0?c+'사항 수리<br>':'')+'- '+esc((x.위치?x.위치+' ':'')+(x.완료내용||(x.조치권고?x.조치권고.replace(/ 후 재점검$| 후 재확인$/,' 완료'):'수리·교체 완료')))+'</td><td class="c">'+esc(x.완료일||'　')+'</td></tr>').join(''); }).join('');
+ const photos=S.불량.map((x,i)=>'<table><tr><th style="width:60px">번호</th><td>'+(i+1)+' ('+esc(x.점검번호||'')+')</td><th>위치</th><td>'+esc(x.위치)+'</td></tr><tr><th>내용</th><td colspan="3">'+esc(x.불량내용)+' → '+esc(x.완료내용||x.조치권고||'')+'</td></tr></table><div class="pair"><div>'+(x.사진?'<img src="'+x.사진+'">':'이행 전 사진 없음')+'</div><div>'+(x.후사진?'<img src="'+x.후사진+'">':'이행 후 사진 없음')+'</div></div><div class="foot" style="display:flex"><span style="flex:1;text-align:center">이행 전</span><span style="flex:1;text-align:center">이행 후</span></div><br>').join('');
+ return formHead('소방시설등의 자체점검 결과 이행완료 보고서','[별지 제11호서식]')+'<table>'+headRows()+'<tr><th rowspan="2">소방공사<br>업체</th><th>업체명(상호)</th><td>'+esc(R.업체명)+'</td><th>사업자번호</th><td>'+esc(R.업체번호)+'</td></tr><tr><th>대표이사</th><td>성명: '+esc(R.업체대표)+'<br>전화번호: '+esc(R.업체전화)+'</td><th>소재지</th><td>'+esc(R.업체소재지)+'</td></tr></table><table><tr><th colspan="2">이행완료 사항</th></tr><tr><th>이행조치 내용</th><th style="width:170px">이행조치 일자</th></tr>'+rows+'</table><p>「소방시설 설치 및 관리에 관한 법률」 제23조제4항 및 같은 법 시행규칙 제23조제6항에 따라 위와 같이 소방시설등의 수리ㆍ교체ㆍ정비에 대한 이행완료 보고서를 제출합니다.</p><div class="sign">'+today+'<br>관계인: '+esc(R.관계인)+' (서명 또는 인)</div><p>'+esc(R.소방서||'○○')+' 소방본부장ㆍ소방서장 귀하</p><div class="foot">첨부서류: 1. 이행계획 건별 이행 전ㆍ후 사진 증명자료 1부 2. 소방시설공사 계약서 1부. 이행을 완료한 날부터 10일 이내 제출(시행규칙 제23조제6항).</div></div><div class="page"><div class="draft">첨부 1 · 이행계획 건별 이행 전ㆍ후 사진 증명자료 (원본 사진만 사용)</div>'+photos+'</div></body></html>'; }
+function openDoc(html,key){ try{new Image().src='https://hits.sh/pefp96-web.github.io/sobang-docs/KEY.svg?t='+Date.now();}catch(e){} html=html.replace('</body>','<script>setTimeout(()=>print(),400)<\/script></body>'); const w=window.open('','_blank'); if(!w){location.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));return} w.document.open();w.document.write(html);w.document.close(); }
+function bindFollow(){ S.이행=S.이행||{}; for(const k of ['관계인','관계인전화','관리자','관리자전화','보고일','소방서','업체명','업체번호','업체대표','업체전화','업체소재지']){ const el=$('f_'+k); if(!el) continue; el.value=S.이행[k]||''; el.oninput=el.onchange=()=>{S.이행[k]=el.value;save()}; } }
 
 const KEY='sobang_report_v1';
 const GROUPS=['소화설비','경보설비','피난구조설비','소화용수설비','소화활동설비','기타'];
@@ -285,10 +325,13 @@ function renderDefects(){
  <label>불량내용(보고서 문구)</label><textarea data-i="${i}" data-k="불량내용">${esc(x.불량내용)}</textarea>
  <label>점검항목</label><input data-i="${i}" data-k="점검항목" value="${esc(x.점검항목)}">
  <label>조치 권고</label><input data-i="${i}" data-k="조치권고" value="${esc(x.조치권고)}">
- <label>사진</label><input type="file" accept="image/*" capture="environment" data-photo="${i}">
+ <div class="row"><div><label>조치 구분</label><select data-i="${i}" data-k="조치구분"><option ${x.조치구분!=="철거·신설"?"selected":""}>교체·정비</option><option ${x.조치구분==="철거·신설"?"selected":""}>철거·신설</option></select></div><div><label>완료일(수리 후)</label><input type="date" data-i="${i}" data-k="완료일" value="${esc(x.완료일)}"></div></div>
+ <label>사진(이행 전·현장)</label><input type="file" accept="image/*" capture="environment" data-photo="${i}">
  ${x.사진?`<img class="thumb" src="${x.사진}">`:''}
+ <label>조치 후 사진</label><input type="file" accept="image/*" capture="environment" data-photo2="${i}">${x.후사진?`<img class="thumb" src="${x.후사진}">`:''}
  <button class="del" onclick="S.불량.splice(${i},1);save();renderDefects()">이 불량 삭제</button></div>`).join('');
  $('defects').querySelectorAll('[data-k]').forEach(el=>el.oninput=el.onchange=()=>{S.불량[el.dataset.i][el.dataset.k]=el.value;save()});
+ $('defects').querySelectorAll('[data-photo2]').forEach(el=>el.onchange=()=>{const f=el.files[0];if(!f)return;shrink(f,1000,0.7).then(u=>{S.불량[el.dataset.photo2].후사진=u;save();renderDefects()})});
  $('defects').querySelectorAll('[data-photo]').forEach(el=>el.onchange=()=>{const f=el.files[0];if(!f)return;shrink(f,1000,0.7).then(u=>{S.불량[el.dataset.photo].사진=u;save();renderDefects()})});
 }
 function suggest(i){
@@ -318,6 +361,6 @@ function makeReport(){
  if(!w){const b=new Blob([html],{type:'text/html'});location.href=URL.createObjectURL(b);return}
  w.document.open();w.document.write(html);w.document.close();
 }
-bindTop();renderPeople();renderEqs();renderDefects();
+bindTop();bindFollow();renderPeople();renderEqs();renderDefects();
 try{new Image().src='https://hits.sh/pefp96-web.github.io/sobang-docs/report-visit.svg?t='+Date.now();}catch(e){}
 </script></body></html>
